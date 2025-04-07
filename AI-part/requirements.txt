@@ -1,0 +1,9 @@
+transformers>=4.38.0 # Библиотека Hugging Face для работы с моделями
+accelerate>=0.25.0 # Для распределенного обучения и оптимизаций
+peft>=0.7.1       # Для Parameter-Efficient Fine-Tuning (LoRA/QLoRA)
+bitsandbytes>=0.41.3 # Для квантизации (загрузки модели в 4/8 бит)
+torch>=2.1.0       # Фреймворк машинного обучения PyTorch
+datasets>=2.16.0  # Для работы с датасетами
+# Можно добавить specific D&D libraries if needed later
+# sentencepiece # Может понадобиться для некоторых токенизаторов
+# protobuf # Может понадобиться для некоторых токенизаторов 
