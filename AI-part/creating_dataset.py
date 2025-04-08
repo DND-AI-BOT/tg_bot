@@ -8,7 +8,7 @@ import google.generativeai as genai # Добавляем импорт Google
 # Загрузка API ключа (лучше из переменных окружения)
 try:
     # Настраиваем ключ API Google (убедитесь, что переменная окружения установлена)
-    google_api_key = os.getenv("GOOGLE_API_KEY_2")
+    google_api_key = os.getenv("GOOGLE_API_KEY")
     if not google_api_key:
         raise ValueError("Переменная окружения GOOGLE_API_KEY не установлена.")
     genai.configure(api_key=google_api_key)
@@ -20,7 +20,7 @@ except Exception as e:
     exit()
 
 
-SRD_TEXT_FILE = "tg_bot/AI-part/phb_text_final.txt" # Путь к файлу с текстом SRD
+SRD_TEXT_FILE = "tg_bot/AI-part/free_dnd_rules.txt" # Путь к файлу с текстом SRD
 OUTPUT_JSONL_FILE = "tg_bot/AI-part/dnd_dataset.jsonl"
 # LLM_MODEL_NAME = "gemini-2.5-pro-exp-03-25" # Используем модель Gemini
 LLM_MODEL_NAME = "gemini-2.0-flash"
@@ -33,11 +33,11 @@ def generate_examples_with_llm(text_chunk, model_name):
     {text_chunk}
     --- ТЕКСТ КОНЕЦ ---
 
-    Сгенерируй 13-15 разнообразных примеров в формате JSON для дообучения ИИ-ассистента Мастера Подземелий.
+    Сгенерируй 4-5 разнообразных примеров в формате JSON для дообучения ИИ-ассистента Мастера Подземелий.
     Каждый пример должен быть отдельным JSON-объектом на новой строке и содержать ключи "instruction" и "output".
     Примеры должны быть основаны ТОЛЬКО на предоставленном тексте. Они могут включать:
     - Вопросы о правилах, упомянутых в тексте, и ответы на них.
-    - Просьбы кратко изложить часть текста.
+    - Просьбы изложить часть текста.
     - Запросы на объяснение терминов из текста.
     - Инструкции, связанные с механиками, описанными в тексте.
     - Задания на создание персонажа, его класса, расы, уровня и т.д.
@@ -57,7 +57,7 @@ def generate_examples_with_llm(text_chunk, model_name):
         model = genai.GenerativeModel(model_name)
         # Устанавливаем параметры генерации (опционально)
         generation_config = genai.types.GenerationConfig(
-            temperature=0.7
+            temperature=0.5
         )
         # Устанавливаем настройки безопасности (можно настроить под себя)
         safety_settings = {
@@ -136,7 +136,7 @@ try:
 
         for i, chunk in enumerate(text_chunks):
             print(f"\nОбработка фрагмента {i+1}/{len(text_chunks)}...")
-            if len(chunk) < 50: # Пропускаем слишком короткие фрагменты
+            if len(chunk) < 90: # Пропускаем слишком короткие фрагменты
                  print("Фрагмент слишком короткий, пропуск.")
                  continue
 
@@ -154,7 +154,7 @@ try:
             # Небольшая задержка, чтобы не превысить лимиты API
             # Для Gemini API лимиты могут отличаться, возможно, можно уменьшить паузу
             # Бесплатный уровень обычно имеет лимит 60 запросов в минуту.
-            time.sleep(1.5) # Пауза в 1.5 секунды (можно подстроить)
+            time.sleep(1.8) # Пауза в 1.5 секунды (можно подстроить)
 
     print(f"\nГенерация завершена. Примеры сохранены в {OUTPUT_JSONL_FILE}")
 
