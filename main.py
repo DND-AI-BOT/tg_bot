@@ -75,7 +75,7 @@ async def load_llm():
         tokenizer.padding_side = "right"
         logging.info("Токенизатор загружен.")
 
-        # --- Загрузка адаптера D&D (ВРЕМЕННО ОТКЛЮЧЕНО ДЛЯ ТЕСТА) --- 
+        # --- Загрузка адаптера D&D (ВРЕМЕННО ОТКЛЮЧЕНО ДЛЯ ТЕСТА) ---
         # Проверяем и загружаем адаптер, используя абсолютный путь
         # if os.path.exists(absolute_adapter_path) and os.path.isdir(absolute_adapter_path):
         #     logging.info(f"Загрузка LoRA адаптера из: {absolute_adapter_path}")
@@ -136,29 +136,29 @@ async def handle_text_message(msg: Message):
     user_text = msg.text
     logging.info(f"Получен текст от {msg.from_user.id}: {user_text}")
 
-    # --- Работа с историей (Временно отключено для теста) --- 
+    # --- Работа с историей (Временно отключено для теста) ---
     chat_id = msg.chat.id
     history = conversation_history.get(chat_id, [])
     # Добавляем текущее сообщение пользователя в историю
     history.append({"role": "user", "content": user_text})
 
-    # --- Формирование промпта (формат Saiga) --- 
+    # --- Формирование промпта (формат Saiga) ---
     # Шаблоны из документации Saiga
     message_template = "<s>{role}\n{content}</s>"
     response_template = "<s>bot\n" # Маркер начала ответа бота
     system_prompt_content = "Ты — ИИ-ассистент, который ведет игру в Dungeons & Dragons 5-й редакции. Ты - мастер этой игры, именно ты должен генерировать конкретных персонажей и конкретные ситуации. Отвечай на вопросы о правилах, самой игре, генерируй описания и помогай с игровыми ситуациями. "
-    
+
     # Собираем промпт
     prompt_parts = []
     # Добавляем системный промпт в правильном формате
     prompt_parts.append(message_template.format(role="system", content=system_prompt_content))
-    
+
     # Добавляем последние сообщения из истории (пропуская системный, если он там был бы)
     # Берем последние N * 2 сообщений (N пар user/bot)
     recent_history = history[-(MAX_HISTORY_TURNS * 2):]
     for message in recent_history:
         prompt_parts.append(message_template.format(**message)) # Передаем весь словарь message
-    
+
     # Добавляем маркер для ответа бота
     prompt_parts.append(response_template)
     prompt = "".join(prompt_parts) # Соединяем без дополнительных переносов строки
@@ -168,8 +168,8 @@ async def handle_text_message(msg: Message):
         # Используем pipeline для генерации
         logging.info("Генерация ответа...")
         # Настройте параметры генерации по необходимости
-        
-        # --- Определяем правильный ID стоп-токена --- 
+
+        # --- Определяем правильный ID стоп-токена ---
         stop_token = "<|im_end|>"
         try:
             stop_token_id = llm_pipeline.tokenizer.convert_tokens_to_ids(stop_token)
@@ -178,11 +178,11 @@ async def handle_text_message(msg: Message):
             stop_token_id = llm_pipeline.tokenizer.eos_token_id # Fallback на стандартный
             logging.warning(f"Токен '{stop_token}' не найден, используем стандартный eos_token_id ({stop_token_id}) как EOS.")
         # Стандартный EOS ID для padding
-        pad_token_id = llm_pipeline.tokenizer.eos_token_id 
+        pad_token_id = llm_pipeline.tokenizer.eos_token_id
         if pad_token_id is None: # На случай если у токенизатора совсем нет eos_token
             pad_token_id = llm_pipeline.tokenizer.pad_token_id
         # ----------------------------------------------
-        
+
         sequences = llm_pipeline(
             prompt,
             max_new_tokens=350,       # Максимальная длина нового текста
@@ -197,7 +197,7 @@ async def handle_text_message(msg: Message):
         # Извлекаем сгенерированный текст из результата pipeline
         raw_response = sequences[0]['generated_text']
 
-        # --- Извлекаем ТОЛЬКО сгенерированную часть --- 
+        # --- Извлекаем ТОЛЬКО сгенерированную часть ---
         generated_response = "" # Инициализируем
         # Важно: т.к. pipeline возвращает и промпт, и ответ,
         # а мы знаем точный формат промпта, ищем начало ответа ПОСЛЕ промпта.
@@ -209,10 +209,10 @@ async def handle_text_message(msg: Message):
             logging.warning("Вывод модели не начинался с промпта. Используется сырой вывод.")
 
         # Логируем ответ ДО финальной очистки
-        logging.info(f"Ответ модели до очистки спец.токенов: {generated_response}") 
+        logging.info(f"Ответ модели до очистки спец.токенов: {generated_response}")
 
-        # --- Улучшенная очистка ответа --- 
-        # 1. Убираем все после первого </s> или <|im_end|> 
+        # --- Улучшенная очистка ответа ---
+        # 1. Убираем все после первого </s> или <|im_end|>
         #    (Saiga может использовать и то, и другое, возьмем то, что раньше)
         stop_tokens = ["</s>", "<|im_end|>"]
         first_stop_pos = -1
@@ -221,7 +221,7 @@ async def handle_text_message(msg: Message):
             if pos != -1:
                 if first_stop_pos == -1 or pos < first_stop_pos:
                     first_stop_pos = pos
-        
+
         if first_stop_pos != -1:
             generated_response = generated_response[:first_stop_pos].strip()
 
@@ -254,6 +254,7 @@ async def main():
         logging.warning("LLM не загружена! Бот будет работать с ограниченной функциональностью (без ответов LLM).")
 
     # Запускаем polling
+    await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
 
