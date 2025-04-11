@@ -8,3 +8,4 @@ __pycache__/
 *.pyc
 tg_bot/AI-part/saiga_mistral_dnd_lora_colab/adapter_model.safetensors
 tg_bot/AI-part/saiga_mistral_dnd_lora_colab/adapter_model.bin 
+/config.json
